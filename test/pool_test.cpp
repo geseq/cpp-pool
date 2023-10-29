@@ -2,10 +2,13 @@
 
 #include <gtest/gtest.h>
 
+static int allocatedCounter = 0;
+
 class MyClass {
    public:
-    MyClass() : x(0) {}
-    int x;
+    MyClass() { ++allocatedCounter; }
+
+    ~MyClass() { --allocatedCounter; }
 };
 
 TEST(AdaptivePobjectPool, AcquireRelease) {
@@ -44,6 +47,41 @@ TEST(AdaptivePobjectPool, InvalidRelease) {
     ASSERT_FALSE(pool.release(obj1));
 
     delete obj1;
+}
+
+TEST(AdaptivePobjectPoolTest, ReleaseExtraObjectsMemory) {
+    allocatedCounter = 0;
+
+    pool::AdaptivePobjectPool<MyClass, 2> pool;
+
+    int initialCount = allocatedCounter;
+
+    MyClass* obj1 = pool.acquire();
+    MyClass* obj2 = pool.acquire();
+
+    MyClass* extra1 = pool.acquire();
+    MyClass* extra2 = pool.acquire();
+
+    ASSERT_TRUE(pool.release(obj1));
+    ASSERT_TRUE(pool.release(obj2));
+
+    ASSERT_EQ(allocatedCounter, initialCount + 2);
+
+    ASSERT_TRUE(pool.release(extra1));
+    ASSERT_TRUE(pool.release(extra2));
+
+    ASSERT_EQ(allocatedCounter, initialCount);
+
+    {
+        pool::AdaptivePobjectPool<MyClass, 2> temp_pool;
+        for (int i = 0; i < 10; ++i) {
+            temp_pool.acquire();
+        }
+
+        ASSERT_EQ(allocatedCounter, initialCount + 10);
+    }
+
+    ASSERT_EQ(allocatedCounter, initialCount);
 }
 
 int main(int argc, char** argv) {
