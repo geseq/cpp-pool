@@ -1,6 +1,6 @@
 # cpp-pool
 
-AdaptivePobjectPool is an object pool designed for fast object allocation and deallocation.
+AdaptiveObjectPool is an object pool designed for fast object allocation and deallocation.
 
 The pool maintains an internal free list of objects for quick allocation. The list is pre-allocated
 with a fixed size (N) to minimize runtime allocations and deallocations. This is intended to provide
@@ -17,7 +17,7 @@ additional synchronization mechanisms must be added.
 
 Usage:
 ```cpp
-AdaptivePobjectPool<MyObject, 100> pool;
+AdaptiveObjectPool<MyObject, 100> pool;
 MyObject* obj = pool.acquire();
 // Use obj...
 pool.release(obj);
