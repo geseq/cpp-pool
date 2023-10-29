@@ -8,7 +8,7 @@
 
 namespace pool {
 /**
- * AdaptivePobjectPool is an object pool designed for fast object allocation and deallocation.
+ * AdaptiveObjectPool is an object pool designed for fast object allocation and deallocation.
  *
  * The pool maintains an internal free list of objects for quick allocation. The list is pre-allocated
  * with a fixed size (N) to minimize runtime allocations and deallocations. This is intended to provide
@@ -24,7 +24,7 @@ namespace pool {
  * additional synchronization mechanisms must be added.
  *
  * Usage:
- * AdaptivePobjectPool<MyObject, 100> pool;
+ * AdaptiveObjectPool<MyObject, 100> pool;
  * MyObject* obj = pool.acquire();
  * // Use obj...
  * pool.release(obj);
@@ -34,9 +34,9 @@ namespace pool {
  * N - The fixed size of the internal free list.
  */
 template <typename T, std::size_t N>
-class AdaptivePobjectPool {
+class AdaptiveObjectPool {
    public:
-    AdaptivePobjectPool() : pool_(N, N) {
+    AdaptiveObjectPool() : pool_(N, N) {
         for (std::size_t i = 0; i < N; ++i) {
             auto obj = pool_.construct();
             free_list_[i] = obj;
@@ -72,7 +72,7 @@ class AdaptivePobjectPool {
         return true;
     }
 
-    ~AdaptivePobjectPool() {
+    ~AdaptiveObjectPool() {
         for (std::size_t i = 0; i < index_; ++i) {
             pool_.destroy(free_list_[i]);
         }
