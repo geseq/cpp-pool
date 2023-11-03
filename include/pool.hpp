@@ -8,7 +8,7 @@
 
 namespace pool {
 /**
- * AdaptiveObjectPool is an object pool designed for fast object allocation and deallocation.
+ * AdaptiveObjectPool is an object pool designed for fast object construction and destruction.
  *
  * The pool uses a fixed sized boost object_pool for construction / destruction. This is intended to provide
  * a performance advantage in scenarios where the cost of dynamic memory allocation is critical.
@@ -17,7 +17,12 @@ namespace pool {
  * are tracked separately and are properly deallocated when released back to the pool. The idea is that
  * these extras will introduce some allocation penalty but will enable the pool to continue functioning.
  *
- * The release method includes a runtime check to ensure that objects are not released into a full pool.
+ * By default the pool works with Safe = true which will keep a track of objects created by the pool
+ * and only destroy those and not other objects sent to release. Additionally it also keeps track of
+ * objects created by the pool and safely destoys them when the pool itself gets destroyed.
+ *
+ * If Safe = false is used, care should be taken to always call release() correctly to avoid leaking
+ * memory, and to avoid destroying objects not owned by the pool.
  *
  * Note: This implementation is not thread-safe. If thread-safe behavior is required,
  * additional synchronization mechanisms must be added.
@@ -30,28 +35,36 @@ namespace pool {
  *
  * Template Parameters:
  * T - The type of object the pool will manage.
- * N - The fixed size of the internal free list.
+ * N - The fixed size of the internal fixed size pool.
+ * Safe - Whether to add additional safety to objects allocated after overflowing the size of the fixed pool.
  */
-template <typename T, std::size_t N>
+template <typename T, std::size_t N, bool Safe = true>
 class AdaptiveObjectPool {
    public:
-    AdaptiveObjectPool() : pool_(N, N) {}
+    AdaptiveObjectPool() = default;
 
     T* acquire() {
         T* t = pool_.construct();
         if (!t) {
             t = new T();
-            extras_set_.insert(t);
+            if constexpr (Safe) {
+                overflow_.insert(t);
+            }
         }
         return t;
     }
 
     bool release(T* obj) {
         if (!pool_.is_from(obj)) {
-            if (auto iter = extras_set_.find(obj); iter != extras_set_.end()) {
-                extras_set_.erase(obj);
-                delete obj;
+            if constexpr (Safe) {
+                if (auto iter = overflow_.find(obj); iter != overflow_.end()) {
+                    overflow_.erase(obj);
+                    delete obj;
 
+                    return true;
+                }
+            } else {
+                delete obj;
                 return true;
             }
             return false;
@@ -62,16 +75,16 @@ class AdaptiveObjectPool {
     }
 
     ~AdaptiveObjectPool() {
-        for (auto iter = extras_set_.begin(); iter != extras_set_.end(); ++iter) {
+        for (auto iter = overflow_.begin(); iter != overflow_.end(); ++iter) {
             delete *iter;
         }
 
-        extras_set_.clear();
+        overflow_.clear();
     }
 
    private:
-    boost::object_pool<T> pool_;
-    std::unordered_set<T*> extras_set_;
+    boost::object_pool<T> pool_{N, N};
+    std::unordered_set<T*> overflow_;
 };
 
 }  // namespace pool
