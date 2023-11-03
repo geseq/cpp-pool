@@ -38,15 +38,12 @@ class AdaptiveObjectPool {
     AdaptiveObjectPool() : pool_(N, N) {}
 
     T* acquire() {
-        if (index_ == 0) {
-            T* t = pool_.construct();
-            if (!t) {
-                t = new T();
-                extras_set_.insert(t);
-            }
-            return t;
+        T* t = pool_.construct();
+        if (!t) {
+            t = new T();
+            extras_set_.insert(t);
         }
-        return free_list_[--index_];
+        return t;
     }
 
     bool release(T* obj) {
