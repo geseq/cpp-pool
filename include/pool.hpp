@@ -10,11 +10,10 @@ namespace pool {
 /**
  * AdaptiveObjectPool is an object pool designed for fast object allocation and deallocation.
  *
- * The pool maintains an internal free list of objects for quick allocation. The list is pre-allocated
- * with a fixed size (N) to minimize runtime allocations and deallocations. This is intended to provide
+ * The pool uses a fixed sized boost object_pool for construction / destruction. This is intended to provide
  * a performance advantage in scenarios where the cost of dynamic memory allocation is critical.
  *
- * If the pool's free list is exhausted, the pool will dynamically allocate new objects. These "extras"
+ * If the object_pool is exhausted, the pool will dynamically allocate new objects. These "extras"
  * are tracked separately and are properly deallocated when released back to the pool. The idea is that
  * these extras will introduce some allocation penalty but will enable the pool to continue functioning.
  *
@@ -36,18 +35,15 @@ namespace pool {
 template <typename T, std::size_t N>
 class AdaptiveObjectPool {
    public:
-    AdaptiveObjectPool() : pool_(N, N) {
-        for (std::size_t i = 0; i < N; ++i) {
-            auto obj = pool_.construct();
-            free_list_[i] = obj;
-        }
-        index_ = N;
-    }
+    AdaptiveObjectPool() : pool_(N, N) {}
 
     T* acquire() {
         if (index_ == 0) {
-            T* t = new T();
-            extras_set_.insert(t);
+            T* t = pool_.construct();
+            if (!t) {
+                t = new T();
+                extras_set_.insert(t);
+            }
             return t;
         }
         return free_list_[--index_];
@@ -64,19 +60,11 @@ class AdaptiveObjectPool {
             return false;
         }
 
-        BOOST_ASSERT(index_ < N);
-
         pool_.destroy(obj);
-        free_list_[index_++] = pool_.construct();
-
         return true;
     }
 
     ~AdaptiveObjectPool() {
-        for (std::size_t i = 0; i < index_; ++i) {
-            pool_.destroy(free_list_[i]);
-        }
-
         for (auto iter = extras_set_.begin(); iter != extras_set_.end(); ++iter) {
             delete *iter;
         }
@@ -86,9 +74,7 @@ class AdaptiveObjectPool {
 
    private:
     boost::object_pool<T> pool_;
-    std::array<T*, N> free_list_;
     std::unordered_set<T*> extras_set_;
-    std::size_t index_{0};
 };
 
 }  // namespace pool
