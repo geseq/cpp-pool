@@ -6,6 +6,13 @@ static int allocatedCounter = 0;
 
 class MyClass {
    public:
+    int internalCounter = 0;
+
+    MyClass(int a, double b, std::string c) {
+        ++allocatedCounter;
+        ++internalCounter;
+    }
+
     MyClass() { ++allocatedCounter; }
 
     ~MyClass() { --allocatedCounter; }
@@ -20,6 +27,21 @@ TEST(AdaptiveObjectPool, AcquireRelease) {
     MyClass* obj2 = pool.acquire();
     ASSERT_NE(obj2, nullptr);
 
+    ASSERT_TRUE(pool.release(obj1));
+    ASSERT_TRUE(pool.release(obj2));
+}
+
+TEST(AdaptiveObjectPool, AcquireReleaseWithArguments) {
+    pool::AdaptiveObjectPool<MyClass, 5> pool;
+
+    MyClass* obj1 = pool.acquire(1, 1.0, "a");
+    ASSERT_NE(obj1, nullptr);
+
+    MyClass* obj2 = pool.acquire();
+    ASSERT_NE(obj2, nullptr);
+
+    ASSERT_EQ(obj1->internalCounter, 1);
+    ASSERT_EQ(obj2->internalCounter, 0);
     ASSERT_TRUE(pool.release(obj1));
     ASSERT_TRUE(pool.release(obj2));
 }

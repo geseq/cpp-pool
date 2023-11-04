@@ -1,7 +1,6 @@
 #ifndef CPP_POOL_H
 #define CPP_POOL_H
 
-#include <array>
 #include <boost/assert.hpp>
 #include <boost/pool/object_pool.hpp>
 #include <unordered_set>
@@ -43,10 +42,11 @@ class AdaptiveObjectPool {
    public:
     AdaptiveObjectPool() = default;
 
-    T* acquire() {
-        T* t = pool_.construct();
+    template <typename... Args>
+    T* acquire(Args&&... args) {
+        T* t = pool_.construct(std::forward<Args>(args)...);
         if (!t) {
-            t = new T();
+            t = new T(std::forward<Args>(args)...);
             if constexpr (Safe) {
                 overflow_.insert(t);
             }
