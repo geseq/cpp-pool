@@ -44,8 +44,10 @@ class AdaptiveObjectPool {
 
     template <typename... Args>
     T* acquire(Args&&... args) {
-        T* t = pool_.construct(std::forward<Args>(args)...);
-        if (!t) {
+        T* t = static_cast<T*>(pool_.malloc());
+        if (t) {
+            new (t) T(std::forward<Args>(args)...);
+        } else {
             t = new T(std::forward<Args>(args)...);
             if constexpr (Safe) {
                 overflow_.insert(t);
