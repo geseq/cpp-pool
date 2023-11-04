@@ -8,7 +8,7 @@ class MyClass {
    public:
     int internalCounter = 0;
 
-    MyClass(int a, double b, std::string c) {
+    MyClass(int a, double b, std::string c, int d, int e, int f) {
         ++allocatedCounter;
         ++internalCounter;
     }
@@ -34,7 +34,7 @@ TEST(AdaptiveObjectPool, AcquireRelease) {
 TEST(AdaptiveObjectPool, AcquireReleaseWithArguments) {
     pool::AdaptiveObjectPool<MyClass, 5> pool;
 
-    MyClass* obj1 = pool.acquire(1, 1.0, "a");
+    MyClass* obj1 = pool.acquire(1, 1.0, "a", 2, 3, 4);
     ASSERT_NE(obj1, nullptr);
 
     MyClass* obj2 = pool.acquire();
