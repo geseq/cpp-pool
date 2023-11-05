@@ -19,7 +19,7 @@ class MyClass {
 };
 
 TEST(AdaptiveObjectPool, AcquireRelease) {
-    pool::AdaptiveObjectPool<MyClass, 5> pool;
+    pool::AdaptiveObjectPool<MyClass> pool{5};
 
     MyClass* obj1 = pool.acquire();
     ASSERT_NE(obj1, nullptr);
@@ -32,7 +32,7 @@ TEST(AdaptiveObjectPool, AcquireRelease) {
 }
 
 TEST(AdaptiveObjectPool, AcquireReleaseWithArguments) {
-    pool::AdaptiveObjectPool<MyClass, 5> pool;
+    pool::AdaptiveObjectPool<MyClass> pool{5};
 
     MyClass* obj1 = pool.acquire(1, 1.0, "a", 2, 3, 4);
     ASSERT_NE(obj1, nullptr);
@@ -47,7 +47,7 @@ TEST(AdaptiveObjectPool, AcquireReleaseWithArguments) {
 }
 
 TEST(AdaptiveObjectPool, ExtraAllocation) {
-    pool::AdaptiveObjectPool<MyClass, 1> pool;
+    pool::AdaptiveObjectPool<MyClass> pool{1};
 
     MyClass* obj1 = pool.acquire();
     ASSERT_NE(obj1, nullptr);
@@ -62,7 +62,7 @@ TEST(AdaptiveObjectPool, ExtraAllocation) {
 }
 
 TEST(AdaptiveObjectPool, InvalidRelease) {
-    pool::AdaptiveObjectPool<MyClass, 5> pool;
+    pool::AdaptiveObjectPool<MyClass> pool{5};
 
     MyClass* obj1 = new MyClass();
 
@@ -74,7 +74,7 @@ TEST(AdaptiveObjectPool, InvalidRelease) {
 TEST(AdaptiveObjectPoolTest, ReleaseExtraObjectsMemory) {
     allocatedCounter = 0;
 
-    pool::AdaptiveObjectPool<MyClass, 2> pool;
+    pool::AdaptiveObjectPool<MyClass> pool{2};
 
     int initialCount = allocatedCounter;
 
@@ -95,7 +95,7 @@ TEST(AdaptiveObjectPoolTest, ReleaseExtraObjectsMemory) {
     ASSERT_EQ(allocatedCounter, initialCount);
 
     {
-        pool::AdaptiveObjectPool<MyClass, 2> temp_pool;
+        pool::AdaptiveObjectPool<MyClass> temp_pool{2};
         for (int i = 0; i < 10; ++i) {
             temp_pool.acquire();
         }
@@ -107,7 +107,7 @@ TEST(AdaptiveObjectPoolTest, ReleaseExtraObjectsMemory) {
 }
 
 TEST(AdaptiveObjectPool, Unsafe_AcquireRelease) {
-    pool::AdaptiveObjectPool<MyClass, 5, false> pool;
+    pool::AdaptiveObjectPool<MyClass, false> pool{5};
 
     MyClass* obj1 = pool.acquire();
     ASSERT_NE(obj1, nullptr);
@@ -120,7 +120,7 @@ TEST(AdaptiveObjectPool, Unsafe_AcquireRelease) {
 }
 
 TEST(AdaptiveObjectPool, Unsafe_ExtraAllocation) {
-    pool::AdaptiveObjectPool<MyClass, 1, false> pool;
+    pool::AdaptiveObjectPool<MyClass, false> pool{1};
 
     MyClass* obj1 = pool.acquire();
     ASSERT_NE(obj1, nullptr);
@@ -135,7 +135,7 @@ TEST(AdaptiveObjectPool, Unsafe_ExtraAllocation) {
 }
 
 TEST(AdaptiveObjectPool, Unsafe_InvalidRelease) {
-    pool::AdaptiveObjectPool<MyClass, 5, false> pool;
+    pool::AdaptiveObjectPool<MyClass, false> pool{5};
 
     MyClass* obj1 = new MyClass();
 
@@ -148,7 +148,7 @@ TEST(AdaptiveObjectPool, Unsafe_InvalidRelease) {
 TEST(AdaptiveObjectPool, Unsafe_ReleaseExtraObjectsMemory) {
     allocatedCounter = 0;
 
-    pool::AdaptiveObjectPool<MyClass, 2, false> pool;
+    pool::AdaptiveObjectPool<MyClass, false> pool{2};
 
     int initialCount = allocatedCounter;
 
@@ -169,7 +169,7 @@ TEST(AdaptiveObjectPool, Unsafe_ReleaseExtraObjectsMemory) {
     ASSERT_EQ(allocatedCounter, initialCount);
 
     {
-        pool::AdaptiveObjectPool<MyClass, 2> temp_pool;
+        pool::AdaptiveObjectPool<MyClass> temp_pool{2};
         for (int i = 0; i < 10; ++i) {
             temp_pool.acquire();
         }

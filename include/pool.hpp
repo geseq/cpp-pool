@@ -37,10 +37,10 @@ namespace pool {
  * N - The fixed size of the internal fixed size pool.
  * Safe - Whether to add additional safety to objects allocated after overflowing the size of the fixed pool.
  */
-template <typename T, std::size_t N, bool Safe = true>
+template <typename T, bool Safe = true>
 class AdaptiveObjectPool {
    public:
-    AdaptiveObjectPool() = default;
+    AdaptiveObjectPool(size_t fixed_size) : pool_(fixed_size, fixed_size){};
 
     template <typename... Args>
     T* acquire(Args&&... args) {
@@ -85,8 +85,8 @@ class AdaptiveObjectPool {
     }
 
    private:
-    boost::object_pool<T> pool_{N, N};
-    std::unordered_set<T*> overflow_;
+    boost::object_pool<T> pool_;
+    std::unordered_set<T*> overflow_ = {};
 };
 
 }  // namespace pool
